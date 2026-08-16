@@ -6,7 +6,6 @@ import {
 } from "firebase/auth";
 
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -14,6 +13,7 @@ import {
   limit,
   query,
   serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 
@@ -64,19 +64,28 @@ function App() {
         const stranger = existing.docs[0];
 
         if (stranger.id !== user.uid) {
-          await deleteDoc(doc(db, "waitingRoom", stranger.id));
+          await deleteDoc(
+            doc(db, "waitingRoom", stranger.id)
+          );
 
-          setStatus("Stranger found! Connecting...");
+          setStatus(
+            `Stranger found: ${stranger.data().username}`
+          );
+
+          setSearching(false);
           return;
         }
       }
 
-      await addDoc(waitingRef, {
-        userId: user.uid,
-        username: username.trim(),
-        status: "waiting",
-        createdAt: serverTimestamp(),
-      });
+      await setDoc(
+        doc(db, "waitingRoom", user.uid),
+        {
+          userId: user.uid,
+          username: username.trim(),
+          status: "waiting",
+          createdAt: serverTimestamp(),
+        }
+      );
 
       setStatus("Waiting for a stranger...");
     } catch (error) {
@@ -98,13 +107,15 @@ function App() {
           Meet someone online. No email. No phone. No signup.
         </p>
 
-        <label htmlFor="username">Choose a username</label>
+        <label htmlFor="username">
+          Choose a username
+        </label>
 
         <input
           id="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter username"
+          placeholder="Enter your username"
           maxLength={24}
           autoComplete="off"
           disabled={searching}
@@ -112,12 +123,20 @@ function App() {
 
         <button
           onClick={findStranger}
-          disabled={!user || username.trim().length < 2 || searching}
+          disabled={
+            !user ||
+            username.trim().length < 2 ||
+            searching
+          }
         >
-          {searching ? "Searching..." : "Find a Stranger"}
+          {searching
+            ? "Searching..."
+            : "Find a Stranger"}
         </button>
 
-        <p className="small">{status}</p>
+        <p className="small">
+          {status}
+        </p>
       </section>
     </main>
   );
