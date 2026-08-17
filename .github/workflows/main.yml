@@ -1,37 +1,3 @@
-name: Build React App
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build React
-        run: npm run build
-
-      - name: Check build files
-        run: |
-          echo "Checking dist folder..."
-          ls -la dist
-          echo "Checking assets folder..."
-          ls -la dist/assets
-
       - name: Create Blogger template
         run: |
           python3 - <<'PY'
@@ -88,9 +54,9 @@ jobs:
 
             <title>Online Stranger Chat No Login</title>
 
-            <style type="text/css"><![CDATA[
+            <b:skin><![CDATA[
           """ + css + """
-            ]]></style>
+            ]]></b:skin>
 
           </head>
 
@@ -116,7 +82,7 @@ jobs:
 
             </b:section>
 
-            <script type="module"><![CDATA[
+            <script type="text/javascript"><![CDATA[
           """ + js + """
             ]]></script>
 
@@ -132,17 +98,3 @@ jobs:
 
           print("Blogger template created successfully")
           PY
-
-      - name: Verify Blogger template
-        run: |
-          echo "Checking blogger-template.xml..."
-          test -f blogger-template.xml
-          ls -lh blogger-template.xml
-
-      - name: Upload build
-        uses: actions/upload-artifact@v4
-        with:
-          name: online-stranger-chat-build
-          path: |
-            dist
-            blogger-template.xml
