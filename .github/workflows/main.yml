@@ -25,8 +25,75 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Upload production build
+      - name: Create Blogger HTML
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          from html import escape
+
+          dist = Path("dist")
+
+          html_file = dist / "index.html"
+          html = html_file.read_text(encoding="utf-8")
+
+          js_file = next((dist / "assets").glob("*.js"))
+          css_file = next((dist / "assets").glob("*.css"))
+
+          js = js_file.read_text(encoding="utf-8")
+          css = css_file.read_text(encoding="utf-8")
+
+          def cdata(text):
+              return text.replace("]]>", "]]]]><![CDATA[>")
+
+          blogger = f'''<?xml version="1.0" encoding="UTF-8" ?>
+          <!DOCTYPE html>
+          <html xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:b="http://www.google.com/2005/gml/b"
+                xmlns:data="http://www.google.com/2005/gml/data"
+                xmlns:expr="http://www.google.com/2005/gml/expr">
+
+          <head>
+            <meta charset="UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <meta name="description" content="Online Stranger Chat No Login"/>
+            <title>Online Stranger Chat No Login</title>
+
+            <style type="text/css"><![CDATA[
+          {cdata(css)}
+            ]]></style>
+          </head>
+
+          <body>
+            <b:section id="main" class="main" maxwidgets="1" showaddelement="no">
+              <b:widget id="HTML1" type="HTML" title="" locked="true">
+                <b:includable id="main">
+                  <div id="root"></div>
+                </b:includable>
+              </b:widget>
+            </b:section>
+
+            <script type="module"><![CDATA[
+          {cdata(js)}
+            ]]></script>
+          </body>
+
+          </html>
+          '''
+
+          Path("blogger-template.xml").write_text(
+              blogger,
+              encoding="utf-8"
+          )
+
+          print("Blogger template created successfully.")
+          print("JS:", js_file)
+          print("CSS:", css_file)
+          PY
+
+      - name: Upload production files
         uses: actions/upload-artifact@v4
         with:
           name: online-stranger-chat-build
-          path: dist
+          path: |
+            dist
+            blogger-template.xml
