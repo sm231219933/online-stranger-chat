@@ -29,7 +29,6 @@ jobs:
         run: |
           echo "Checking dist folder..."
           test -d dist
-          echo "Checking assets folder..."
           test -d dist/assets
           ls -lah dist/assets
 
@@ -42,9 +41,6 @@ jobs:
           dist = Path("dist")
           assets = dist / "assets"
 
-          if not dist.exists():
-              raise Exception("dist folder was not created")
-
           if not assets.exists():
               raise Exception("dist/assets folder was not created")
 
@@ -52,22 +48,23 @@ jobs:
           css_files = list(assets.glob("*.css"))
 
           if not js_files:
-              raise Exception("JavaScript file not found in dist/assets")
+              raise Exception("JavaScript file not found")
 
           if not css_files:
-              raise Exception("CSS file not found in dist/assets")
+              raise Exception("CSS file not found")
 
           js = js_files[0].read_text(encoding="utf-8")
           css = css_files[0].read_text(encoding="utf-8")
 
-          # Remove invalid XML characters
+          # Remove invalid XML control characters
           js = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', js)
           css = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', css)
 
-          # Protect CDATA closing sequence inside CSS
+          # Protect CDATA closing sequence
+          js = js.replace("]]>", "]]]]><![CDATA[>")
           css = css.replace("]]>", "]]]]><![CDATA[>")
 
-          blogger = """<?xml version="1.0" encoding="UTF-8" ?>
+          blogger = """<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE html>
 
           <html xmlns="http://www.w3.org/1999/xhtml"
@@ -114,9 +111,9 @@ jobs:
 
             </b:section>
 
-            <script type="text/javascript">
+            <script type="text/javascript"><![CDATA[
           """ + js + """
-            </script>
+            ]]></script>
 
           </body>
 
@@ -129,11 +126,12 @@ jobs:
           )
 
           print("Blogger template created successfully")
+          PY
 
       - name: Verify Blogger template
         run: |
           test -f blogger-template.xml
-          echo "Blogger template created successfully"
+          echo "Template created:"
           ls -lh blogger-template.xml
 
       - name: Upload build
