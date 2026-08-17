@@ -42,8 +42,11 @@ jobs:
           js = js_file.read_text(encoding="utf-8")
           css = css_file.read_text(encoding="utf-8")
 
-          def cdata(text):
-              return text.replace("]]>", "]]]]><![CDATA[>")
+          import re
+
+def cdata(text):
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+    return text.replace("]]>", "]]]]><![CDATA[>")
 
           blogger = f'''<?xml version="1.0" encoding="UTF-8" ?>
           <!DOCTYPE html>
