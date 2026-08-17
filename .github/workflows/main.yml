@@ -1,3 +1,38 @@
+name: Build React App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React
+        run: npm run build
+
+      - name: Check build
+        run: |
+          echo "Checking dist folder..."
+          test -d dist
+          echo "Checking assets folder..."
+          test -d dist/assets
+          ls -lah dist/assets
+
       - name: Create Blogger template
         run: |
           python3 - <<'PY'
@@ -7,25 +42,19 @@
           dist = Path("dist")
           assets = dist / "assets"
 
-          if not dist.exists():
-              raise Exception("dist folder was not created")
-
-          if not assets.exists():
-              raise Exception("dist/assets folder was not created")
-
           js_files = list(assets.glob("*.js"))
           css_files = list(assets.glob("*.css"))
 
           if not js_files:
-              raise Exception("JavaScript file not found in dist/assets")
+              raise Exception("JavaScript file not found")
 
           if not css_files:
-              raise Exception("CSS file not found in dist/assets")
+              raise Exception("CSS file not found")
 
           js = js_files[0].read_text(encoding="utf-8")
           css = css_files[0].read_text(encoding="utf-8")
 
-          # Remove characters that XML 1.0 does not allow
+          # Remove invalid XML characters
           js = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', js)
           css = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', css)
 
@@ -35,29 +64,21 @@
 
           blogger = """<?xml version="1.0" encoding="UTF-8" ?>
           <!DOCTYPE html>
-
           <html xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:b="http://www.google.com/2005/gml/b"
                 xmlns:data="http://www.google.com/2005/gml/data"
                 xmlns:expr="http://www.google.com/2005/gml/expr">
 
           <head>
-
             <meta charset="UTF-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-            <meta name="description"
-                  content="Online Stranger Chat No Login"/>
-
-            <meta name="robots"
-                  content="index,follow"/>
-
+            <meta name="description" content="Online Stranger Chat No Login"/>
+            <meta name="robots" content="index,follow"/>
             <title>Online Stranger Chat No Login</title>
 
             <b:skin><![CDATA[
           """ + css + """
             ]]></b:skin>
-
           </head>
 
           <body>
@@ -73,9 +94,7 @@
                         locked="true">
 
                 <b:includable id="main">
-
                   <div id="root"></div>
-
                 </b:includable>
 
               </b:widget>
@@ -87,7 +106,6 @@
             ]]></script>
 
           </body>
-
           </html>
           """
 
@@ -97,4 +115,17 @@
           )
 
           print("Blogger template created successfully")
-          PY
+
+      - name: Verify Blogger template
+        run: |
+          test -f blogger-template.xml
+          echo "Blogger template created:"
+          ls -lh blogger-template.xml
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: online-stranger-chat-build
+          path: |
+            dist
+            blogger-template.xml
