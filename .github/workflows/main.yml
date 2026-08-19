@@ -1,10 +1,19 @@
-name: Build React App
+name: Deploy React App to GitHub Pages
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -22,122 +31,28 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build React
+      - name: Build React app
         run: npm run build
 
-      - name: Check build
-        run: |
-          echo "Checking dist folder..."
-          test -d dist
-          test -d dist/assets
-          ls -lah dist/assets
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
 
-      - name: Create Blogger template
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          dist = Path("dist")
-          assets = dist / "assets"
-
-          if not assets.exists():
-              raise Exception("dist/assets folder was not created")
-
-          js_files = list(assets.glob("*.js"))
-          css_files = list(assets.glob("*.css"))
-
-          if not js_files:
-              raise Exception("JavaScript file not found")
-
-          if not css_files:
-              raise Exception("CSS file not found")
-
-          js = js_files[0].read_text(encoding="utf-8")
-          css = css_files[0].read_text(encoding="utf-8")
-
-          # Remove invalid XML control characters
-          js = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', js)
-          css = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', css)
-
-          # Protect CDATA closing sequence
-          js = js.replace("]]>", "]]]]><![CDATA[>")
-          css = css.replace("]]>", "]]]]><![CDATA[>")
-
-          blogger = """<?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE html>
-
-          <html xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:b="http://www.google.com/2005/gml/b"
-                xmlns:data="http://www.google.com/2005/gml/data"
-                xmlns:expr="http://www.google.com/2005/gml/expr">
-
-          <head>
-
-            <meta charset="UTF-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-            <meta name="description"
-                  content="Online Stranger Chat No Login"/>
-
-            <meta name="robots"
-                  content="index,follow"/>
-
-            <title>Online Stranger Chat No Login</title>
-
-            <b:skin><![CDATA[
-          """ + css + """
-            ]]></b:skin>
-
-          </head>
-
-          <body>
-
-            <b:section id="main"
-                       class="main"
-                       maxwidgets="1"
-                       showaddelement="no">
-
-              <b:widget id="HTML1"
-                        type="HTML"
-                        title=""
-                        locked="true">
-
-                <b:includable id="main">
-                  <div id="root"></div>
-                </b:includable>
-
-              </b:widget>
-
-            </b:section>
-
-            <script type="text/javascript"><![CDATA[
-          """ + js + """
-            ]]></script>
-
-          </body>
-
-          </html>
-          """
-
-          Path("blogger-template.xml").write_text(
-              blogger,
-              encoding="utf-8"
-          )
-
-          print("Blogger template created successfully")
-          PY
-
-      - name: Verify Blogger template
-        run: |
-          test -f blogger-template.xml
-          echo "Template created:"
-          ls -lh blogger-template.xml
-
-      - name: Upload build
-        uses: actions/upload-artifact@v4
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: online-stranger-chat-build
-          path: |
-            dist
-            blogger-template.xml
+          path: ./dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
