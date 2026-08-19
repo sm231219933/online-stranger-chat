@@ -14,157 +14,39 @@ import {
   doc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import "./styles.css";
 
-type Profile = {
-  uid: string;
-  username: string;
-  country: string;
-  state: string;
-  age: number;
-  gender: "Male" | "Female" | "Neutral";
-  avatar?: string;
-  online?: boolean;
-  emailAccount?: boolean;
-  createdAt?: unknown;
-};
-
+type Profile = { uid: string; username: string; country: string; state: string; age: number; gender: "Male" | "Female" | "Neutral"; avatar?: string; online?: boolean; emailAccount?: boolean };
 type Message = { uid: string; text: string; image?: string; createdAt: number };
-
 const CLOUD_NAME = "miglsezs";
 const UPLOAD_PRESET = "stranger_chat";
 const countries = ["India", "United States", "United Kingdom", "Canada", "Australia", "Other"];
 const genders = ["All", "Male", "Female", "Neutral"];
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selected, setSelected] = useState<Profile | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [text, setText] = useState("");
-  const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("All");
-  const [gender, setGender] = useState("All");
-  const [stateFilter, setStateFilter] = useState("");
-  const [screen, setScreen] = useState<"profile" | "room" | "auth">("profile");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
-  const [error, setError] = useState("");
+  const [user, setUser] = useState<User | null>(null), [profile, setProfile] = useState<Profile | null>(null), [profiles, setProfiles] = useState<Profile[]>([]), [selected, setSelected] = useState<Profile | null>(null), [messages, setMessages] = useState<Message[]>([]), [text, setText] = useState(""), [search, setSearch] = useState(""), [country, setCountry] = useState("All"), [gender, setGender] = useState("All"), [stateFilter, setStateFilter] = useState(""), [screen, setScreen] = useState<"profile" | "room" | "auth">("profile"), [loading, setLoading] = useState(true), [saving, setSaving] = useState(false), [email, setEmail] = useState(""), [password, setPassword] = useState(""), [authMode, setAuthMode] = useState<"signup" | "login">("signup"), [error, setError] = useState("");
 
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const q = query(collection(db, "matches"), where("uid", "==", u.uid));
-        const snap = await getDocs(q);
-        if (!snap.empty) setProfile(snap.docs[0].data() as Profile);
-      }
-      setLoading(false);
-    });
-  }, []);
+  useEffect(() => onAuthStateChanged(auth, async u => { setUser(u); if (u) { const snap = await getDocs(query(collection(db, "matches"), where("uid", "==", u.uid))); if (!snap.empty) setProfile(snap.docs[0].data() as Profile); } setLoading(false); }), []);
+  useEffect(() => { if (!user) return; return onSnapshot(collection(db, "matches"), snap => setProfiles(snap.docs.map(d => d.data() as Profile).filter(p => p.uid !== user.uid))); }, [user]);
+  useEffect(() => { if (!selected || !user) return; const chatId = [user.uid, selected.uid].sort().join("_"); return onSnapshot(doc(db, "chats", chatId), snap => setMessages((snap.data()?.messages || []) as Message[])); }, [selected, user]);
 
-  useEffect(() => {
-    if (!user) return;
-    return onSnapshot(collection(db, "matches"), (snap) => {
-      setProfiles(snap.docs.map((d) => d.data() as Profile).filter((p) => p.uid !== user.uid));
-    });
-  }, [user]);
-
-  useEffect(() => {
-    if (!selected || !user) return;
-    const chatId = [user.uid, selected.uid].sort().join("_");
-    return onSnapshot(doc(db, "chats", chatId), (snap) => {
-      const data = snap.data();
-      setMessages((data?.messages || []) as Message[]);
-    });
-  }, [selected, user]);
-
-  async function guestStart() {
-    if (!auth.currentUser) await signInAnonymously(auth);
-    setScreen("profile");
-  }
-
-  async function saveProfile(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!user || !profile) return;
-    setSaving(true); setError("");
-    try {
-      const normalized = profile.username.trim().toLowerCase();
-      if (!/^[a-z0-9_.-]{3,24}$/.test(normalized)) throw new Error("Username: 3-24 letters, numbers, _ . or - only.");
-      const existing = await getDocs(query(collection(db, "matches"), where("username", "==", normalized)));
-      if (existing.docs.some((d) => d.data().uid !== user.uid)) throw new Error("This username is already taken.");
-      const finalProfile = { ...profile, username: normalized, uid: user.uid, online: true, updatedAt: serverTimestamp(), emailAccount: !!user.email };
-      await setDoc(doc(db, "matches", user.uid), finalProfile, { merge: true });
-      setProfile({ ...profile, username: normalized, uid: user.uid, online: true, emailAccount: !!user.email });
-      setScreen("room");
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not save profile"); }
-    finally { setSaving(false); }
-  }
-
-  async function uploadAvatar(file: File) {
-    setError("");
-    try {
-      const body = new FormData(); body.append("file", file); body.append("upload_preset", UPLOAD_PRESET);
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body });
-      if (!res.ok) throw new Error("Avatar upload failed");
-      const data = await res.json();
-      setProfile((p) => p ? { ...p, avatar: data.secure_url } : p);
-    } catch (e) { setError(e instanceof Error ? e.message : "Upload failed"); }
-  }
-
-  async function sendMessage(image?: string) {
-    if (!user || !selected || (!text.trim() && !image)) return;
-    const chatId = [user.uid, selected.uid].sort().join("_");
-    const message: Message = { uid: user.uid, text: text.trim(), image, createdAt: Date.now() };
-    await setDoc(doc(db, "chats", chatId), { participants: [user.uid, selected.uid], messages: arrayUnion(message), updatedAt: serverTimestamp() }, { merge: true });
-    setText("");
-  }
-
-  async function uploadChatImage(file: File) {
-    const body = new FormData(); body.append("file", file); body.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body });
-    if (!res.ok) return setError("Image upload failed");
-    const data = await res.json(); await sendMessage(data.secure_url);
-  }
-
-  async function accountAction() {
-    setError("");
-    try {
-      if (authMode === "signup") {
-        if (user?.isAnonymous && user) {
-          await linkWithCredential(user, EmailAuthProvider.credential(email, password));
-        } else await createUserWithEmailAndPassword(auth, email, password);
-      } else await signInWithEmailAndPassword(auth, email, password);
-      setScreen("profile");
-    } catch (e) { setError(e instanceof Error ? e.message.replace("Firebase: ", "") : "Authentication failed"); }
-  }
-
-  const filtered = useMemo(() => profiles.filter((p) =>
-    (!search || p.username.includes(search.toLowerCase())) &&
-    (country === "All" || p.country === country) &&
-    (gender === "All" || p.gender === gender) &&
-    (!stateFilter || p.state.toLowerCase().includes(stateFilter.toLowerCase()))
-  ), [profiles, search, country, gender, stateFilter]);
-
+  async function guestStart() { if (!auth.currentUser) await signInAnonymously(auth); setScreen("profile"); }
+  async function saveProfile(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!user || !profile) return; setSaving(true); setError(""); try { const normalized = profile.username.trim().toLowerCase(); if (!/^[a-z0-9_.-]{3,24}$/.test(normalized)) throw new Error("Username: 3-24 letters, numbers, _ . or - only."); const existing = await getDocs(query(collection(db, "matches"), where("username", "==", normalized))); if (existing.docs.some(d => d.data().uid !== user.uid)) throw new Error("This username is already taken."); await setDoc(doc(db, "matches", user.uid), { ...profile, username: normalized, uid: user.uid, online: true, updatedAt: serverTimestamp(), emailAccount: !!user.email }, { merge: true }); setProfile({ ...profile, username: normalized, uid: user.uid, online: true, emailAccount: !!user.email }); setScreen("room"); } catch (e) { setError(e instanceof Error ? e.message : "Could not save profile"); } finally { setSaving(false); } }
+  async function uploadAvatar(file: File) { setError(""); try { const body = new FormData(); body.append("file", file); body.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body }); if (!res.ok) throw new Error("Avatar upload failed"); const data = await res.json(); setProfile(p => p ? { ...p, avatar: data.secure_url } : p); } catch (e) { setError(e instanceof Error ? e.message : "Upload failed"); } }
+  async function sendMessage(image?: string) { const currentUser = user; if (!currentUser || !selected || (!text.trim() && !image)) return; const chatId = [currentUser.uid, selected.uid].sort().join("_"); const message: Message = { uid: currentUser.uid, text: text.trim(), image, createdAt: Date.now() }; await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selected.uid], messages: arrayUnion(message), updatedAt: serverTimestamp() }, { merge: true }); setText(""); }
+  async function uploadChatImage(file: File) { const body = new FormData(); body.append("file", file); body.append("upload_preset", UPLOAD_PRESET); const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body }); if (!res.ok) return setError("Image upload failed"); const data = await res.json(); await sendMessage(data.secure_url); }
+  async function accountAction() { setError(""); try { if (authMode === "signup") { if (user?.isAnonymous && user) await linkWithCredential(user, EmailAuthProvider.credential(email, password)); else await createUserWithEmailAndPassword(auth, email, password); } else await signInWithEmailAndPassword(auth, email, password); setScreen("profile"); } catch (e) { setError(e instanceof Error ? e.message.replace("Firebase: ", "") : "Authentication failed"); } }
+  const filtered = useMemo(() => profiles.filter(p => (!search || p.username.includes(search.toLowerCase())) && (country === "All" || p.country === country) && (gender === "All" || p.gender === gender) && (!stateFilter || p.state.toLowerCase().includes(stateFilter.toLowerCase()))), [profiles, search, country, gender, stateFilter]);
   if (loading) return <div className="loading">Loading Stranger Chat…</div>;
-
   if (screen === "auth") return <main className="app"><section className="auth card"><div className="logo">💬</div><h1>{authMode === "signup" ? "Create your account" : "Welcome back"}</h1><p>Keep your unique username and profile forever.</p><input placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} /><input placeholder="Password (6+ characters)" type="password" value={password} onChange={e => setPassword(e.target.value)} /><button onClick={accountAction}>{authMode === "signup" ? "Sign up" : "Log in"}</button><button className="ghost" onClick={() => setAuthMode(authMode === "signup" ? "login" : "signup")}>{authMode === "signup" ? "Already have an account? Log in" : "New here? Create account"}</button>{error && <div className="error">{error}</div>}<button className="link" onClick={guestStart}>Continue as guest</button></section></main>;
-
   if (screen === "profile" || !profile) return <main className="app"><section className="card profile-card"><div className="brand"><span>💬</span><div><b>Stranger Chat</b><small>No signup required</small></div></div><h1>Set up your profile</h1><p className="muted">Enter your details and meet people around the world.</p><form onSubmit={saveProfile}><div className="avatar-row"><div className="avatar large">{profile?.avatar ? <img src={profile.avatar} /> : "👤"}</div><label className="upload">Upload photo<input type="file" accept="image/*" onChange={e => e.target.files?.[0] && uploadAvatar(e.target.files[0])} /></label></div><input required placeholder="Unique username" value={profile?.username || ""} onChange={e => setProfile({ uid: user?.uid || "", username: e.target.value, country: profile?.country || "India", state: profile?.state || "", age: profile?.age || 18, gender: profile?.gender || "Neutral", avatar: profile?.avatar })} /><select value={profile?.country || "India"} onChange={e => setProfile({ ...profile!, country: e.target.value })}>{countries.map(c => <option key={c}>{c}</option>)}</select><input placeholder="State / Province" required value={profile?.state || ""} onChange={e => setProfile({ ...profile!, state: e.target.value })} /><div className="two"><input required type="number" min="13" max="100" placeholder="Age" value={profile?.age || ""} onChange={e => setProfile({ ...profile!, age: Number(e.target.value) })} /><select value={profile?.gender || "Neutral"} onChange={e => setProfile({ ...profile!, gender: e.target.value as Profile["gender"] })}><option>Male</option><option>Female</option><option>Neutral</option></select></div><button disabled={saving}>{saving ? "Saving…" : "Enter Chat Room →"}</button></form><button className="ghost" onClick={() => setScreen("auth")}>🔐 Sign up / Log in to keep username</button>{error && <div className="error">{error}</div>}</section></main>;
-
-  return <main className="app room"><aside className="sidebar"><div className="brand"><span>💬</span><div><b>Stranger Chat</b><small>{profiles.length} people online</small></div></div><div className="me"><div className="avatar">{profile.avatar ? <img src={profile.avatar} /> : "👤"}</div><div><b>@{profile.username}</b><small>{profile.country} · {profile.gender}</small></div></div><button className="primary" onClick={() => setScreen("profile")}>✏️ Edit profile</button><button className="ghost" onClick={() => setScreen("auth")}>🔐 Account</button></aside><section className="people"><div className="room-head"><div><h2>People</h2><small>Find someone to chat with</small></div></div><div className="search"><span>⌕</span><input placeholder="Search username…" value={search} onChange={e => setSearch(e.target.value.toLowerCase())} /></div><div className="filters"><select value={country} onChange={e => setCountry(e.target.value)}>{countries.map(c => <option key={c}>{c}</option>)}</select><select value={gender} onChange={e => setGender(e.target.value)}>{genders.map(g => <option key={g}>{g}</option>)}</select><input placeholder="State" value={stateFilter} onChange={e => setStateFilter(e.target.value)} /></div><div className="list">{filtered.map(p => <button className="person" key={p.uid} onClick={() => setSelected(p)}><div className="avatar">{p.avatar ? <img src={p.avatar} /> : "👤"}<i /></div><div><b>@{p.username}</b><small>{p.country} · {p.state} · {p.age}</small></div><span>›</span></button>)}{filtered.length === 0 && <div className="empty">No people found. Try another search or filter.</div>}</div></section><section className="chat">{selected ? <><header><button className="back" onClick={() => setSelected(null)}>‹</button><div className="avatar">{selected.avatar ? <img src={selected.avatar} /> : "👤"}</div><div><b>@{selected.username}</b><small>{selected.country} · {selected.state}</small></div></header><div className="messages">{messages.map((m, i) => <div key={i} className={`bubble ${m.uid === user.uid ? "mine" : ""}`}>{m.image && <img src={m.image} />} {m.text && <div>{m.text}</div>}</div>)}{messages.length === 0 && <div className="empty">Say hello 👋</div>}</div><footer><label className="attach">＋<input type="file" accept="image/*" onChange={e => e.target.files?.[0] && uploadChatImage(e.target.files[0])} /></label><input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Write a message… 😊" /><button onClick={() => sendMessage()}>➤</button></footer></> : <div className="welcome"><div>💬</div><h2>Choose someone to chat</h2><p>Search the people list and tap a profile to start a private conversation.</p></div>}</section>{error && <div className="toast error">{error}</div>}</main>;
+  const currentUser = user; if (!currentUser) return null;
+  return <main className="app room"><aside className="sidebar"><div className="brand"><span>💬</span><div><b>Stranger Chat</b><small>{profiles.length} people online</small></div></div><div className="me"><div className="avatar">{profile.avatar ? <img src={profile.avatar} /> : "👤"}</div><div><b>@{profile.username}</b><small>{profile.country} · {profile.gender}</small></div></div><button className="primary" onClick={() => setScreen("profile")}>✏️ Edit profile</button><button className="ghost" onClick={() => setScreen("auth")}>🔐 Account</button></aside><section className="people"><div className="room-head"><div><h2>People</h2><small>Find someone to chat with</small></div></div><div className="search"><span>⌕</span><input placeholder="Search username…" value={search} onChange={e => setSearch(e.target.value.toLowerCase())} /></div><div className="filters"><select value={country} onChange={e => setCountry(e.target.value)}>{countries.map(c => <option key={c}>{c}</option>)}</select><select value={gender} onChange={e => setGender(e.target.value)}>{genders.map(g => <option key={g}>{g}</option>)}</select><input placeholder="State" value={stateFilter} onChange={e => setStateFilter(e.target.value)} /></div><div className="list">{filtered.map(p => <button className="person" key={p.uid} onClick={() => setSelected(p)}><div className="avatar">{p.avatar ? <img src={p.avatar} /> : "👤"}<i /></div><div><b>@{p.username}</b><small>{p.country} · {p.state} · {p.age}</small></div><span>›</span></button>)}{filtered.length === 0 && <div className="empty">No people found. Try another search or filter.</div>}</div></section><section className="chat">{selected ? <><header><button className="back" onClick={() => setSelected(null)}>‹</button><div className="avatar">{selected.avatar ? <img src={selected.avatar} /> : "👤"}</div><div><b>@{selected.username}</b><small>{selected.country} · {selected.state}</small></div></header><div className="messages">{messages.map((m, i) => <div key={i} className={`bubble ${m.uid === currentUser.uid ? "mine" : ""}`}>{m.image && <img src={m.image} />} {m.text && <div>{m.text}</div>}</div>)}{messages.length === 0 && <div className="empty">Say hello 👋</div>}</div><footer><label className="attach">＋<input type="file" accept="image/*" onChange={e => e.target.files?.[0] && uploadChatImage(e.target.files[0])} /></label><input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Write a message… 😊" /><button onClick={() => sendMessage()}>➤</button></footer></> : <div className="welcome"><div>💬</div><h2>Choose someone to chat</h2><p>Search the people list and tap a profile to start a private conversation.</p></div>}</section>{error && <div className="toast error">{error}</div>}</main>;
 }
-
 export default App;
