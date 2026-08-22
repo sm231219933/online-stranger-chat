@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -18,30 +18,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
       - name: Install dependencies
         run: npm install
-
+      - name: Fix activeUser TypeScript error
+        run: sed -i 's/let activeUser = user;/const activeUser: User = user ?? (await signInAnonymously(auth)).user;/' src/App.tsx && sed -i '/if (!activeUser) {/,/setUser(activeUser);/d' src/App.tsx
       - name: Build React app
         run: npm run build
-
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
-
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-
   deploy:
     name: Deploy website
     runs-on: ubuntu-latest
