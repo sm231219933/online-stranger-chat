@@ -55,10 +55,7 @@ export default function App() {
         setError(e instanceof Error ? e.message : "Could not connect to Firebase.");
       }
     });
-    // Do not block the first screen while Firebase auth starts.
-    signInAnonymously(auth).catch(() => {
-      // Anonymous auth may be disabled; the profile screen still opens.
-    });
+    signInAnonymously(auth).catch(() => {});
     return unsubscribe;
   }, []);
 
@@ -88,11 +85,8 @@ export default function App() {
     if (!profile) return;
     setSaving(true); setError("");
     try {
-      let activeUser = user;
-      if (!activeUser) {
-        activeUser = await signInAnonymously(auth).then(r => r.user);
-        setUser(activeUser);
-      }
+      const activeUser: User = user ?? (await signInAnonymously(auth)).user;
+      setUser(activeUser);
       const current = { ...profile, uid: activeUser.uid };
       const username = current.username.trim().toLowerCase();
       if (!/^[a-z0-9_.-]{3,24}$/.test(username)) throw new Error("Username must be 3-24 letters, numbers, dot, dash or underscore.");
