@@ -2,8 +2,7 @@ name: Deploy React App to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -30,26 +29,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Fix activeUser TypeScript error
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path("src/App.tsx")
-          s = p.read_text()
-          old = '''      let activeUser = user;
-      if (!activeUser) {
-        activeUser = await signInAnonymously(auth).then(r => r.user);
-        setUser(activeUser);
-      }
-'''
-          new = '''      const activeUser: User = user ?? (await signInAnonymously(auth)).user;
-      setUser(activeUser);
-'''
-          if old not in s:
-              raise SystemExit("activeUser block not found")
-          p.write_text(s.replace(old, new, 1))
-          PY
-
       - name: Build React app
         run: npm run build
 
@@ -62,9 +41,15 @@ jobs:
           path: ./dist
 
   deploy:
-    name: Deploy website
-    runs-on: ubuntu-latest
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy website
+        id: deployment
         uses: actions/deploy-pages@v4
