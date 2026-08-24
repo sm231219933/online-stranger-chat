@@ -32,8 +32,11 @@ jobs:
       - name: Build React app
         run: npm run build
 
-      - name: Copy Google Search Console verification file
-        run: cp google1d1c64e508cb6905.html dist/google1d1c64e508cb6905.html
+      - name: Copy SEO and verification files
+        run: |
+          cp google1d1c64e508cb6905.html dist/google1d1c64e508cb6905.html
+          cp sitemap.xml dist/sitemap.xml
+          cp robots.txt dist/robots.txt
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
