@@ -3,7 +3,7 @@ import { arrayUnion, collection, doc, onSnapshot, query, setDoc, where } from "f
 import { db } from "./firebase";
 
 type CallProfile = { uid: string; username: string; avatar: string; photoURL?: string };
-type Props = { user: { uid: string } | null; selected: CallProfile | null };
+type Props = { user: { uid: string; username?: string } | null; selected: CallProfile | null };
 type CallType = "voice" | "video";
 type CallStatus = "ringing" | "connecting" | "connected" | "ended";
 
@@ -140,7 +140,7 @@ export default function CallControls({ user, selected }: Props) {
       await setDoc(ref, {
         callerId: user.uid,
         calleeId: selected.uid,
-        callerName: user.uid,
+        callerName: user.username || "ChatOnlineMe user",
         calleeName: selected.username,
         type,
         offer,
