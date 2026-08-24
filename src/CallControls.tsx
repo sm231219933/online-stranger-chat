@@ -34,6 +34,7 @@ export default function CallControls({ user, selected }: Props) {
   const remote = useRef<MediaStream | null>(null);
   const callId = useRef("");
   const callListener = useRef<(() => void) | null>(null);
+  const callStatus = useRef<CallStatus>("connecting");
   const seenRemoteCandidates = useRef(new Set<string>());
   const localVideo = useRef<HTMLVideoElement | null>(null);
   const remoteVideo = useRef<HTMLVideoElement | null>(null);
@@ -49,6 +50,11 @@ export default function CallControls({ user, selected }: Props) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
 
+  const updateStatus = (next: CallStatus) => {
+    callStatus.current = next;
+    setStatus(next);
+  };
+
   const cleanup = () => {
     callListener.current?.();
     callListener.current = null;
@@ -63,7 +69,7 @@ export default function CallControls({ user, selected }: Props) {
     setLocalStream(null);
     setRemoteStream(null);
     setActive(null);
-    setStatus("connecting");
+    updateStatus("connecting");
     setMuted(false);
     setCamera(true);
   };
@@ -119,9 +125,7 @@ export default function CallControls({ user, selected }: Props) {
       const ref = doc(collection(db, "calls"));
       callId.current = ref.id;
       connection.onicecandidate = (event) => {
-        if (event.candidate) {
-          void setDoc(ref, { callerCandidates: arrayUnion(event.candidate.toJSON()) }, { merge: true });
-        }
+        if (event.candidate) void setDoc(ref, { callerCandidates: arrayUnion(event.candidate.toJSON()) }, { merge: true });
       };
       connection.ontrack = (event) => {
         const stream = event.streams[0];
@@ -136,7 +140,7 @@ export default function CallControls({ user, selected }: Props) {
       await setDoc(ref, {
         callerId: user.uid,
         calleeId: selected.uid,
-        callerName: selected.username,
+        callerName: user.uid,
         calleeName: selected.username,
         type,
         offer,
@@ -147,7 +151,7 @@ export default function CallControls({ user, selected }: Props) {
       });
 
       setActive(type);
-      setStatus("ringing");
+      updateStatus("ringing");
 
       const unsubscribe = onSnapshot(ref, (snapshot) => {
         const data = snapshot.data() as CallDoc | undefined;
@@ -159,7 +163,7 @@ export default function CallControls({ user, selected }: Props) {
         if (data.answer && !connection.currentRemoteDescription) {
           void connection.setRemoteDescription(new RTCSessionDescription(data.answer))
             .then(() => applyRemoteCandidates(connection, data.calleeCandidates || []))
-            .then(() => setStatus("connected"))
+            .then(() => updateStatus("connected"))
             .catch(() => setError("Could not connect the call."));
         } else if (data.calleeCandidates?.length) {
           void applyRemoteCandidates(connection, data.calleeCandidates);
@@ -167,7 +171,7 @@ export default function CallControls({ user, selected }: Props) {
       });
       callListener.current = unsubscribe;
       window.setTimeout(() => {
-        if (callId.current === ref.id && status !== "connected") {
+        if (callId.current === ref.id && callStatus.current !== "connected") {
           void setDoc(ref, { status: "ended" }, { merge: true });
           cleanup();
         }
@@ -196,9 +200,7 @@ export default function CallControls({ user, selected }: Props) {
       const ref = doc(db, "calls", incomingId);
 
       connection.onicecandidate = (event) => {
-        if (event.candidate) {
-          void setDoc(ref, { calleeCandidates: arrayUnion(event.candidate.toJSON()) }, { merge: true });
-        }
+        if (event.candidate) void setDoc(ref, { calleeCandidates: arrayUnion(event.candidate.toJSON()) }, { merge: true });
       };
       connection.ontrack = (event) => {
         const stream = event.streams[0];
@@ -216,7 +218,7 @@ export default function CallControls({ user, selected }: Props) {
       setIncoming(null);
       setIncomingId("");
       setActive(type);
-      setStatus("connected");
+      updateStatus("connected");
 
       callListener.current = onSnapshot(ref, (snapshot) => {
         const data = snapshot.data() as CallDoc | undefined;
