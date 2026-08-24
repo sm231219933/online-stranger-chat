@@ -82,9 +82,9 @@ export default function CallControls({ user, selected }: Props) {
 
   useEffect(() => {
     if (!user || !selected) return;
-    const q = query(collection(db, "calls"), where("calleeId", "==", user.uid), where("status", "==", "ringing"));
+    const q = query(collection(db, "calls"), where("calleeId", "==", user.uid));
     return onSnapshot(q, (snapshot) => {
-      const call = snapshot.docs[0];
+      const call = snapshot.docs.find((item) => item.data().status === "ringing");
       if (call && !active) {
         setIncoming(call.data() as CallDoc);
         setIncomingId(call.id);
