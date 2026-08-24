@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sm231219933.github.io/online-stranger-chat/sitemap.xml
