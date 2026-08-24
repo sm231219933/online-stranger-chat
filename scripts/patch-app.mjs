@@ -3,15 +3,18 @@ import fs from "node:fs";
 const path="src/App.tsx";
 let s=fs.readFileSync(path,"utf8");
 
+// The original App contains placeholder mailto call buttons. Remove them so the
+// real WebRTC controls below are the only call buttons shown in the chat header.
+s=s.replace(/<div className=\"call-actions\"><button title=\"Voice call\"[\s\S]*?<\/div><button className=\"more\"/, '<button className="more"');
+
 if(!s.includes('from "./CallControls"')) s=s.replace('import "./responsive.css";','import "./responsive.css";\nimport CallControls from "./CallControls";');
-if(!s.includes("<CallControls user={user} selected={selected}/>") && s.includes('<header className="chat-top">')) s=s.replace('</header><div className="messages">','</header><CallControls user={user} selected={selected}/><div className="messages">');
+if(!s.includes("<CallControls user={user} selected={selected}/>") && s.includes('<header className="chat-top">')) s=s.replace('</header><div className="messages">','<CallControls user={user} selected={selected}/></header><div className="messages">');
 if(!s.includes('signOut, type User')) s=s.replace('signInWithEmailAndPassword, type User','signInWithEmailAndPassword, signOut, type User');
 if(!s.includes('deleteField')) s=s.replace('serverTimestamp, setDoc, where } from "firebase/firestore";','deleteDoc, deleteField, serverTimestamp, setDoc, where } from "firebase/firestore";');
 
 // Keep the source type declarations compatible with the status/presence features injected below.
 s=s.replace('type Profile = { uid:string; username:string; country:string; countryCode:string; state:string; stateCode:string; age:number; gender:Gender|""; avatar:string; online?:boolean; emailAccount?:boolean; photoURL?:string };','type Profile = { uid:string; username:string; country:string; countryCode:string; state:string; stateCode:string; age:number; gender:Gender|""; avatar:string; online?:boolean; lastSeen?:number; logoutAt?:number; emailAccount?:boolean; photoURL?:string };');
 s=s.replace('type Message = { uid:string; text:string; createdAt:number; image?:string };','type Message = { id:string; uid:string; text:string; createdAt:number; image?:string; status?:"sending"|"sent"|"delivered"|"seen"; sentAt?:number; deliveredAt?:number; seenAt?:number };');
-// Also support the compact form used by older App.tsx versions.
 s=s.replace('type Profile={uid:string;username:string;country:string;countryCode:string;state:string;stateCode:string;age:number;gender:Gender|"";avatar:string;online?:boolean;emailAccount?:boolean;photoURL?:string};','type Profile={uid:string;username:string;country:string;countryCode:string;state:string;stateCode:string;age:number;gender:Gender|"";avatar:string;online?:boolean;lastSeen?:number;logoutAt?:number;emailAccount?:boolean;photoURL?:string};');
 s=s.replace('type Message={uid:string;text:string;createdAt:number;image?:string};','type Message={id:string;uid:string;text:string;createdAt:number;image?:string;status?:"sending"|"sent"|"delivered"|"seen";sentAt?:number;deliveredAt?:number;seenAt?:number};');
 
@@ -40,16 +43,12 @@ s=s.replace('const id=[user.uid,selected.uid].sort().join("_"),m:Message=image?{
 if(!s.includes('async function updateMessageStatus')) s=s.replace('useEffect(()=>{if(!user||!selected)return;','async function updateMessageStatus(chatId:string,messageId:string,status:"delivered"|"seen"){const ref=doc(db,"chats",chatId);const snap=await getDoc(ref);if(!snap.exists())return;const data=snap.data(),ms=(data.messages||[]) as Message[],now=Date.now(),next=ms.map(m=>m.id===messageId?{...m,status,...(status==="delivered"?{deliveredAt:m.deliveredAt||now}:{deliveredAt:m.deliveredAt||now,seenAt:m.seenAt||now})}:m);await setDoc(ref,{messages:next,updatedAt:serverTimestamp()},{merge:true})}\n\nuseEffect(()=>{if(!user)return;const q=query(collection(db,"chats"),where("participants","array-contains",user.uid));return onSnapshot(q,snap=>{snap.docs.forEach(d=>{const ms=(d.data().messages||[]) as Message[];ms.filter(m=>m.uid!==user.uid&&m.status!=="delivered"&&m.status!=="seen").forEach(m=>void updateMessageStatus(d.id,m.id,"delivered").catch(()=>{}))})},e=>setError(`Delivery error: ${e.message}`))},[user]);\n\nuseEffect(()=>{if(!user||!selected)return;');
 s=s.replace('useEffect(()=>{if(!user||!selected)return;const id=[user.uid,selected.uid].sort().join("_");return onSnapshot(doc(db,"chats",id),s=>setMessages((s.data()?.messages||[]) as Message[]),e=>setError(`Chat error: ${e.message}`))},[user,selected]);','useEffect(()=>{if(!user||!selected)return;const id=[user.uid,selected.uid].sort().join("_");return onSnapshot(doc(db,"chats",id),snap=>{const ms=(snap.data()?.messages||[]) as Message[];setMessages(ms);ms.filter(m=>m.uid!==user.uid&&m.status!=="seen").forEach(m=>void updateMessageStatus(id,m.id,"seen").catch(()=>{}))},e=>setError(`Chat error: ${e.message}`))},[user,selected]);');
 
-// Delete expired chat documents whenever an active client is online. Firebase Firestore TTL should also be enabled on expiresAt for server-side deletion.
-if(!s.includes('expiredChats')) s=s.replace('useEffect(()=>{if(!user)return;const q=query(collection(db,"chats"),where("participants","array-contains",user.uid));','useEffect(()=>{if(!user)return;const expiredChats=query(collection(db,"chats"),where("expiresAt","<=",Date.now()));void getDocs(expiredChats).then(r=>Promise.all(r.docs.map(d=>deleteDoc(d.ref)))).catch(()=>{});const q=query(collection(db,"chats"),where("participants","array-contains",user.uid));');
-
 s=s.replace('unread:last.uid!==user.uid','unread:last.uid!==user.uid&&last.status!=="seen"');
 s=s.replace('className={p.online?"online":"offline"}','className={isActuallyOnline(p)?"online":"offline"}');
 s=s.replace('{selected?.online?"● Online":"Offline"}','{isActuallyOnline(selected)?"● Online":"Offline"}');
-s=s.replace('<button className="ghost" onClick={()=>setScreen("profile")}>My Profile</button>','<button className="ghost" onClick={()=>setScreen("profile")}>My Profile</button><button className="ghost" onClick={()=>void logout()}>Logout</button>');
 s=s.replace('<small>{new Date(m.createdAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</small>','<small>{new Date(m.createdAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}{m.uid===user?.uid&&<span className="message-status"> {m.status==="seen"?"🔵✓✓":m.status==="delivered"?"✓✓":m.status==="sent"?"✓":"🕐"}</span>}</small>');
 
-// Guest profile screen: remove the right-side How To Join content and the extra sign-up/login prompt.
+// Guest profile screen should stay focused: no duplicate guide/footer content is injected into the form.
 s=s.replace('<aside className="join-guide">','<aside className="join-guide" style={{display:"none"}}>');
 s=s.replace('<button className="ghost" onClick={()=>{setAuthMode("signup");setScreen("auth")}}>🔐 Sign up & add profile photo</button>','');
 
