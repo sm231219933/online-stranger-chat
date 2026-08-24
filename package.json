@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/patch-app.mjs && node scripts/fix-ui.mjs",
+    "prebuild": "node scripts/patch-app.mjs && node scripts/fix-ui.mjs && node scripts/fix-chat.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
