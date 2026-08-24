@@ -8,7 +8,7 @@ let s=fs.readFileSync(path,"utf8");
 s=s.replace(/<div className=\"call-actions\"><button title=\"Voice call\"[\s\S]*?<\/div><button className=\"more\"/, '<button className="more"');
 
 if(!s.includes('from "./CallControls"')) s=s.replace('import "./responsive.css";','import "./responsive.css";\nimport CallControls from "./CallControls";');
-if(!s.includes("<CallControls user={user} selected={selected}/>") && s.includes('<header className="chat-top">')) s=s.replace('</header><div className="messages">','<CallControls user={user} selected={selected}/></header><div className="messages">');
+if(!s.includes("<CallControls user={user} selected={selected}/>") && s.includes('<header className="chat-top">')) s=s.replace('</header><div className="messages">','<CallControls user={user ? {uid:user.uid, username:profile.username} : null} selected={selected}/></header><div className="messages">');
 if(!s.includes('signOut, type User')) s=s.replace('signInWithEmailAndPassword, type User','signInWithEmailAndPassword, signOut, type User');
 if(!s.includes('deleteField')) s=s.replace('serverTimestamp, setDoc, where } from "firebase/firestore";','deleteDoc, deleteField, serverTimestamp, setDoc, where } from "firebase/firestore";');
 
