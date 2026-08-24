@@ -18,7 +18,7 @@ if (!app.includes("const chatMessagesRef=useRef")) {
 if (!app.includes("function handleMessagesScroll")) {
   app = app.replace(
     '  function changeGender(g:Gender){',
-    '  function handleMessagesScroll(e:React.UIEvent<HTMLDivElement>){const el=e.currentTarget;stickToBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<120;}\n  useEffect(()=>{if(!selected)return;stickToBottom.current=true;previousMessageCount.current=0;requestAnimationFrame(()=>{const el=chatMessagesRef.current;if(el)el.scrollTop=el.scrollHeight;});},[selected?.uid]);\n  useEffect(()=>{if(messages.length===0)return;const grew=messages.length>=previousMessageCount.current;previousMessageCount.current=messages.length;if(grew&&stickToBottom.current)requestAnimationFrame(()=>{const el=chatMessagesRef.current;if(el)el.scrollTop=el.scrollHeight;});},[messages.length]);\n  function changeGender(g:Gender){'
+    '  function handleMessagesScroll(e:{currentTarget:HTMLDivElement}){const el=e.currentTarget;stickToBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<120;}\n  useEffect(()=>{if(!selected)return;stickToBottom.current=true;previousMessageCount.current=0;requestAnimationFrame(()=>{const el=chatMessagesRef.current;if(el)el.scrollTop=el.scrollHeight;});},[selected?.uid]);\n  useEffect(()=>{if(messages.length===0)return;const grew=messages.length>=previousMessageCount.current;previousMessageCount.current=messages.length;if(grew&&stickToBottom.current)requestAnimationFrame(()=>{const el=chatMessagesRef.current;if(el)el.scrollTop=el.scrollHeight;});},[messages.length]);\n  function changeGender(g:Gender){'
   );
 }
 
@@ -27,8 +27,6 @@ app = app.replace(
   '<div className="messages" ref={chatMessagesRef} onScroll={handleMessagesScroll}>'
 );
 
-// Never send an undefined image field to Firestore. This also gives each message a stable id
-// so delivery/seen status updates can target one message safely.
 app = app.replace(
   'type Message = { uid:string; text:string; createdAt:number; image?:string };',
   'type Message = { id:string; uid:string; text:string; createdAt:number; image?:string; status?:"sending"|"sent"|"delivered"|"seen"; sentAt?:number; deliveredAt?:number; seenAt?:number };'
