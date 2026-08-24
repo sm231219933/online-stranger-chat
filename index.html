@@ -16,6 +16,44 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (() => {
+        let observedChat = null;
+        let resizeObserver = null;
+        let frame = 0;
+
+        const keepLatestVisible = (el) => {
+          if (!el) return;
+          cancelAnimationFrame(frame);
+          frame = requestAnimationFrame(() => {
+            el.scrollTop = el.scrollHeight;
+            requestAnimationFrame(() => {
+              if (el.isConnected) el.scrollTop = el.scrollHeight;
+            });
+          });
+        };
+
+        const watchMessages = () => {
+          const el = document.querySelector('.messages');
+          if (!el || el === observedChat) return;
+
+          observedChat = el;
+          if (resizeObserver) resizeObserver.disconnect();
+          el.style.scrollBehavior = 'auto';
+          keepLatestVisible(el);
+
+          const mutationObserver = new MutationObserver(() => keepLatestVisible(el));
+          mutationObserver.observe(el, { childList: true, subtree: true });
+
+          resizeObserver = new ResizeObserver(() => keepLatestVisible(el));
+          resizeObserver.observe(el);
+        };
+
+        const rootObserver = new MutationObserver(watchMessages);
+        rootObserver.observe(document.documentElement, { childList: true, subtree: true });
+        watchMessages();
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
