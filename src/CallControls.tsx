@@ -52,8 +52,6 @@ export default function CallControls({ user, selected }: Props) {
     if (remoteAudio.current && remoteStream) remoteAudio.current.srcObject = remoteStream;
   }, [localStream, remoteStream, active]);
 
-  // Listen globally for incoming calls. The receiver does not need to have the caller
-  // selected in the left panel first; the notification itself is the entry point.
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "calls"), where("calleeId", "==", user.uid));
@@ -136,7 +134,11 @@ export default function CallControls({ user, selected }: Props) {
   return <>
     {selected && <div className="call-actions"><button title="Voice call" aria-label="Start voice call" disabled={!!active || !!incoming} onClick={() => void start("voice")}>📞</button><button title="Video call" aria-label="Start video call" disabled={!!active || !!incoming} onClick={() => void start("video")}>🎥</button></div>}
     {incoming && <div className="call-overlay"><div className="call-card incoming-call-card"><div className="call-avatar">{incoming.type === "video" ? "🎥" : "📞"}</div><b>Incoming {incoming.type} call</b><small>@{incoming.callerName || "ChatOnlineMe user"} is calling you.</small><div><button className="accept" onClick={() => void accept()}>Accept</button><button className="reject" onClick={() => void reject()}>Decline</button></div></div></div>}
-    {active && <div className="call-overlay"><div className={`call-card active-call ${active === "video" ? "video-call-card" : "voice-call-card"}>{active === "video" ? <div className="video-stage"><video ref={remoteVideo} className="remote-video" autoPlay playsInline /><video ref={localVideo} className="local-video" autoPlay muted playsInline /></div> : <audio ref={remoteAudio} autoPlay />}<div className="call-avatar">{active === "video" ? "🎥" : "📞"}</div><b>{active === "video" ? "Video" : "Voice"} call</b><small>{status === "ringing" ? "Calling…" : status === "connected" ? "Connected" : "Connecting…"}</small><div className="call-controls"><button onClick={() => { local.current?.getAudioTracks().forEach((track) => { track.enabled = muted; }); setMuted(!muted); }}>{muted ? "🔇" : "🎙️"}</button>{active === "video" && <button onClick={() => { local.current?.getVideoTracks().forEach((track) => { track.enabled = !camera; }); setCamera(!camera); }}>{camera ? "📷" : "🚫"}</button>}<button className="reject" onClick={() => void end()}>☎ End</button></div></div></div>}
+    {active && <div className="call-overlay"><div className={`call-card active-call ${active === "video" ? "video-call-card" : "voice-call-card"}`}>
+      {active === "video" ? <div className="video-stage"><video ref={remoteVideo} className="remote-video" autoPlay playsInline /><video ref={localVideo} className="local-video" autoPlay muted playsInline /></div> : <audio ref={remoteAudio} autoPlay />}
+      <div className="call-avatar">{active === "video" ? "🎥" : "📞"}</div><b>{active === "video" ? "Video" : "Voice"} call</b><small>{status === "ringing" ? "Calling…" : status === "connected" ? "Connected" : "Connecting…"}</small>
+      <div className="call-controls"><button onClick={() => { local.current?.getAudioTracks().forEach((track) => { track.enabled = muted; }); setMuted(!muted); }}>{muted ? "🔇" : "🎙️"}</button>{active === "video" && <button onClick={() => { local.current?.getVideoTracks().forEach((track) => { track.enabled = !camera; }); setCamera(!camera); }}>{camera ? "📷" : "🚫"}</button>}<button className="reject" onClick={() => void end()}>☎ End</button></div>
+    </div></div>}
     {error && <div className="toast error">{error}</div>}
   </>;
 }
