@@ -4,15 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#5b5cf0" />
-    <meta name="description" content="ChatOnlineMe — random chat, anonymous chat and online chatting with strangers. Chat without registration, chat free, meet new people, send messages, emojis and photos, and connect through voice or video calls." />
+    <meta name="description" content="ChatOnlineMe — free random and anonymous online chat with strangers. Chat without registration, meet new people, send messages, emojis and photos, and connect through voice or video calls." />
     <meta name="keywords" content="chatting with stranger girls, chatting with stranger website, chatting with stranger without registration, chatting with stranger free, online chatting, online chatting video call, online chatting app with stranger, online chatting free, random chat, random chat online, anonymous chat, anonymous chat online, stranger chat, online stranger chat, chat with strangers, talk to strangers, no login chat, chat without login, free random chat, private chat, text chat, emoji chat, photo chat, voice call, video call, video chat, meet new people, ChatOnlineMe" />
-    <meta name="robots" content="index,follow" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <link rel="canonical" href="https://sm231219933.github.io/online-stranger-chat/" />
+    <link rel="sitemap" type="application/xml" href="https://sm231219933.github.io/online-stranger-chat/sitemap.xml" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sm231219933.github.io/online-stranger-chat/" />
     <meta property="og:title" content="ChatOnlineMe — Random & Anonymous Chat Online" />
     <meta property="og:description" content="Chat with strangers for free, with or without registration. Meet new people and enjoy online chatting, emojis, photos, voice and video calls." />
     <meta property="og:site_name" content="ChatOnlineMe" />
     <meta name="twitter:card" content="summary" />
-    <title>ChatOnlineMe — Random Chat & Anonymous Online Chat | No Registration</title>
+    <meta name="twitter:title" content="ChatOnlineMe — Random & Anonymous Chat Online" />
+    <meta name="twitter:description" content="Free random and anonymous online chatting with strangers. No registration required." />
+    <title>ChatOnlineMe — Online Chatting Without Registration | Random & Anonymous Chat</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "ChatOnlineMe",
+        "url": "https://sm231219933.github.io/online-stranger-chat/",
+        "description": "Free random and anonymous online chatting with strangers, with optional registration, photos, emojis, voice and video calls.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://sm231219933.github.io/online-stranger-chat/?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -20,16 +39,14 @@
       (() => {
         let observedChat = null;
         let resizeObserver = null;
+        let mutationObserver = null;
         let frame = 0;
 
         const keepLatestVisible = (el) => {
           if (!el) return;
           cancelAnimationFrame(frame);
           frame = requestAnimationFrame(() => {
-            el.scrollTop = el.scrollHeight;
-            requestAnimationFrame(() => {
-              if (el.isConnected) el.scrollTop = el.scrollHeight;
-            });
+            if (el.isConnected) el.scrollTop = el.scrollHeight;
           });
         };
 
@@ -39,10 +56,11 @@
 
           observedChat = el;
           if (resizeObserver) resizeObserver.disconnect();
+          if (mutationObserver) mutationObserver.disconnect();
           el.style.scrollBehavior = 'auto';
           keepLatestVisible(el);
 
-          const mutationObserver = new MutationObserver(() => keepLatestVisible(el));
+          mutationObserver = new MutationObserver(() => keepLatestVisible(el));
           mutationObserver.observe(el, { childList: true, subtree: true });
 
           resizeObserver = new ResizeObserver(() => keepLatestVisible(el));
