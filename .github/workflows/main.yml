@@ -37,7 +37,7 @@ jobs:
           cp google1d1c64e508cb6905.html dist/google1d1c64e508cb6905.html
           cp sitemap.xml dist/sitemap.xml
           cp robots.txt dist/robots.txt
-
+cp app-ads.txt dist/app-ads.txt
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
