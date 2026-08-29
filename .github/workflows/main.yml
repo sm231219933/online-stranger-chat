@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +38,8 @@ jobs:
           cp google1d1c64e508cb6905.html dist/google1d1c64e508cb6905.html
           cp sitemap.xml dist/sitemap.xml
           cp robots.txt dist/robots.txt
-cp app-ads.txt dist/app-ads.txt
+          cp app-ads.txt dist/app-ads.txt
+
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
@@ -49,12 +51,15 @@ cp app-ads.txt dist/app-ads.txt
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
     permissions:
       pages: write
       id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy website
         id: deployment
