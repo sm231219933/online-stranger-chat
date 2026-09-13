@@ -1,11 +1,11 @@
-// Keep the active form field focused if React replaces that DOM node during a render.
-// This is intentionally limited to editable inputs and textareas.
+// Preserve the active field when React remounts a screen during a state update.
 type FieldInfo = {
   tag: "input" | "textarea";
   id: string;
   name: string;
   placeholder: string;
   type: string;
+  value: string;
 };
 
 let lastField: FieldInfo | null = null;
@@ -26,6 +26,7 @@ function remember(el: Element | null) {
     name: el.getAttribute("name") || "",
     placeholder: el.getAttribute("placeholder") || "",
     type: el instanceof HTMLInputElement ? el.type : "textarea",
+    value: el.value,
   };
 }
 
@@ -45,17 +46,17 @@ function findField() {
     if (isEditable(el)) return el;
   }
 
-  // Some fields (notably the Age number input) have no id/name/placeholder.
-  // Use their stable HTML type as a fallback instead of losing the cursor.
-  if (lastField.tag === "textarea") {
-    const el = document.querySelector("textarea");
-    if (isEditable(el)) return el;
-  } else {
-    const el = document.querySelector(`input[type="${CSS.escape(lastField.type)}"]`);
-    if (isEditable(el)) return el;
-  }
+  // Match the exact value after React has replaced the DOM node.
+  // This handles the profile username field, which intentionally has no id/name.
+  const candidates = Array.from(document.querySelectorAll(lastField.tag))
+    .filter(isEditable)
+    .filter(el => (el instanceof HTMLInputElement ? el.type : "textarea") === lastField!.type);
 
-  return null;
+  const exact = candidates.find(el => el.value === lastField!.value);
+  if (exact) return exact;
+
+  // Final fallback for the age number input.
+  return candidates[0] || null;
 }
 
 function restoreNow() {
@@ -83,6 +84,8 @@ function queueRestore() {
     restoreNow();
   });
   requestAnimationFrame(restoreNow);
+  window.setTimeout(restoreNow, 0);
+  window.setTimeout(restoreNow, 16);
 }
 
 document.addEventListener("focusin", event => remember(event.target as Element), true);
@@ -91,7 +94,12 @@ document.addEventListener("input", event => {
   queueRestore();
 }, true);
 
+document.addEventListener("change", event => {
+  remember(event.target as Element);
+  queueRestore();
+}, true);
+
 const observer = new MutationObserver(() => {
-  if (lastField && document.activeElement !== findField()) queueRestore();
+  if (lastField) queueRestore();
 });
 observer.observe(document.documentElement, { childList: true, subtree: true });
