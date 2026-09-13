@@ -7,7 +7,7 @@ let s = fs.readFileSync(p, "utf8");
 s = s.replaceAll("ChatOnlineMe", "Stranger Chat Now");
 s = s.replace(
   'setError(`Chat error: ${e.message}`)},[user,selected]);',
-  'setError(`Chat error: ${e.message}`)}),[user,selected]);'
+  'setError(`Chat error: ${e.message}`))},[user,selected]);'
 );
 
 fs.writeFileSync(p, s);
