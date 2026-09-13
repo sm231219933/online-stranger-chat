@@ -51,3 +51,17 @@
 @media(max-width:700px){
   .profile-shell .center::before{font-size:28px;margin-bottom:10px}
 }
+
+/* Only fix the profile window: make the complete guest-registration form independently scrollable at any browser zoom. */
+.profile-shell .profile-card{
+  height:calc(100dvh - 150px)!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  box-sizing:border-box!important;
+  overscroll-behavior:contain!important;
+}
+@media(max-width:700px){
+  .profile-shell .profile-card{height:calc(100dvh - 110px)!important}
+}
