@@ -17,3 +17,10 @@
 
 /* Chat composer: stable multiline typing area */
 .chat-page .composer textarea{flex:1;min-width:0;min-height:44px;max-height:140px;width:100%;resize:none;box-sizing:border-box;border:1px solid #e2e5ef;border-radius:14px;padding:11px 13px;font:inherit;line-height:1.4;background:#fff;color:#172033;outline:none;overflow-y:auto}.chat-page .composer textarea:focus{border-color:#7c83f6;box-shadow:0 0 0 3px #7c83f620}.chat-page .composer{align-items:flex-end}.chat-page .composer .icon-btn{flex:0 0 auto}.chat-page .composer .send{flex:0 0 auto}
+
+/* Requested profile fixes only: keep the desktop heading inside the visible card area. */
+@media(min-width:761px){.profile-shell .center{padding-top:34px;padding-bottom:34px}.profile-shell .profile-card{max-height:calc(100vh - 105px);padding-top:34px;overflow-y:auto}.profile-shell .profile-card h1{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:1}}
+
+/* Make the selected avatar unmistakable while it is selected. */
+.profile-shell .avatar-picker button.selected,.profile-shell .avatar-picker button[aria-pressed="true"],.profile-shell .avatar-grid .avatar-choice.selected{border:3px solid #5b5cf0!important;box-shadow:0 0 0 4px #5b5cf033!important;background:#eef0ff!important;transform:translateY(-1px)}
+.profile-shell .avatar-picker button:focus-visible{outline:3px solid #5b5cf0!important;outline-offset:2px}
