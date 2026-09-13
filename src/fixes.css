@@ -24,3 +24,31 @@
   .avatar-picker{width:100%!important}
   .avatar-options,.avatar-grid{overflow-x:auto!important}
 }
+
+/* Profile page: remove the decorative identity preview and keep the heading visible while zooming/scrolling. */
+.profile-shell .profile-card .profile-preview{display:none!important}
+.profile-shell .profile-card h1{
+  position:sticky!important;
+  top:0!important;
+  z-index:20!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-height:78px!important;
+  margin:0!important;
+  padding:4px 0 10px!important;
+  background:#fff!important;
+}
+.profile-shell .profile-card h1::after{
+  content:"Online chatting without registration"!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  font-size:clamp(28px,3vw,42px)!important;
+  line-height:1.15!important;
+  color:#17203c!important;
+}
+@media(max-width:900px){
+  .profile-shell .profile-card h1{min-height:68px!important}
+  .profile-shell .profile-card h1::after{font-size:30px!important}
+}
