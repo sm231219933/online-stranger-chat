@@ -13,12 +13,7 @@ s = s.replace(
 // Chat must never animate-scroll while the user is typing.
 s = s.replaceAll('behavior:"smooth"', 'behavior:"auto"');
 
-// -----------------------------------------------------------------------------
-// 1) Keep the chat composer completely outside App state while typing.
-//    The old controlled input called setText() on every character. Because Chat
-//    is currently declared inside App(), that could recreate the Chat component
-//    and replace the input DOM/caret. Use the DOM value until Send instead.
-// -----------------------------------------------------------------------------
+// Keep chat typing outside App state so the input/caret cannot be replaced on each character.
 if (!s.includes('const chatInputRef=useRef<HTMLInputElement|null>(null);')) {
   s = s.replace(
     'const previousMessageCount=useRef(0);',
@@ -42,7 +37,7 @@ s = s.replace(
   'disabled={sending} onClick={()=>void sendMessage()}'
 );
 
-// Prevent Firestore status writes from creating extra App renders while chatting.
+// Avoid Firestore delivery/read writes that cause extra renders while chatting.
 s = s.replace(
   'ms.filter(m=>m.uid!==user.uid&&m.status!=="delivered"&&m.status!=="seen").forEach(m=>void updateMessageStatus(d.id,m.id,"delivered").catch(()=>{}))',
   ''
@@ -52,11 +47,7 @@ s = s.replace(
   ''
 );
 
-// -----------------------------------------------------------------------------
-// 2) Guest profile text fields must not update App state per character.
-//    They are submitted through FormData instead. This prevents the profile card
-//    from being recreated on every alphabet/number and losing focus/caret.
-// -----------------------------------------------------------------------------
+// Guest profile username/age are uncontrolled while typing. FormData reads their final values on submit.
 s = s.replace(
   '<label>Username<input required value={profile.username} onChange={e=>setProfile({...profile,username:e.target.value})}/></label>',
   '<label>Username<input name="username" required defaultValue={profile.username}/></label>'
@@ -70,15 +61,7 @@ s = s.replace(
   'async function saveProfile(e:FormEvent){e.preventDefault();setSaving(true);setError("");try{const form=e.currentTarget,fd=new FormData(form),username=String(fd.get("username")||profile.username),age=Number(fd.get("age")||profile.age),u=user||(await signInAnonymously(auth)).user,p={...profile,uid:u.uid,username,age},name=p.username.trim().toLowerCase();'
 );
 
-// -----------------------------------------------------------------------------
-// 3) Preserve the current page across browser refreshes.
-//    Use the existing hash (#profile, #room, #chat, etc.) as the source of truth.
-//    Also preserve the selected chat profile in sessionStorage so #chat can reopen.
-// -----------------------------------------------------------------------------
-s = s.replace(
-  'const [saving,setSaving]=useState(false),[sending,setSending]=useState(false),[uploading,setUploading]=useState(false),[error,setError]=useState(""),[presenceTick,setPresenceTick]=useState(0);',
-  'const [saving,setSaving]=useState(false),[sending,setSending]=useState(false),[uploading,setUploading]=useState(false),[error,setError]=useState(""),[presenceTick,setPresenceTick]=useState(0);\n  const setScreenStateRef=useRef<((next:Screen)=>void)|null>(null);'
-);
+// Persist the current screen in the existing URL hash so browser refresh returns to the same page.
 s = s.replace(
   'const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile>(emptyProfile()),[profiles,setProfiles]=useState<Profile[]>([]),[selected,setSelected]=useState<Profile|null>(null),[messages,setMessages]=useState<Message[]>([]),[inbox,setInbox]=useState<InboxItem[]>([]),[screen,setScreen]=useState<Screen>("home");',
   'const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile>(emptyProfile()),[profiles,setProfiles]=useState<Profile[]>([]),[selected,setSelected]=useState<Profile|null>(null),[messages,setMessages]=useState<Message[]>([]),[inbox,setInbox]=useState<InboxItem[]>([]),[screen,setScreenState]=useState<Screen>(()=>{const h=window.location.hash.replace(/^#/ ,"") as Screen;return ["home","profile","room","chat","auth","inbox","safety","tips","faq","privacy","terms","support","feedback"].includes(h)?h:"home"});\n  const setScreen=(next:Screen)=>{setScreenState(next);if(window.location.hash!==`#${next}`)window.history.replaceState(null,"",`#${next}`);};'
@@ -92,14 +75,12 @@ if (!s.includes('sessionStorage.getItem("stranger-chat-selected")')) {
   );
 }
 
-// Do not force every refresh without authentication back to Home when a valid
-// informational/profile hash is already present.
+// Do not force a valid hash route back to Home when Firebase auth initializes.
 s = s.replace(
   'if(!u){setUser(null);setProfile(emptyProfile());setSelected(null);setMessages([]);setScreen("home");return;}',
   'if(!u){setUser(null);setProfile(emptyProfile());setSelected(null);setMessages([]);if(!window.location.hash)setScreen("home");return;}'
 );
 
-// Load the profile CSS fixes.
 if (!s.includes('import "./fixes.css";')) {
   s = s.replace('import "./pages.css";', 'import "./pages.css";\nimport "./fixes.css";');
 }
