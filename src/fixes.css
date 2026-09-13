@@ -4,3 +4,22 @@
 .profile-card h1{font-size:0!important;line-height:1.15}
 .profile-card h1::after{content:"Online chatting without registration";display:block;font-size:clamp(28px,3vw,42px);line-height:1.15;color:#17203c}
 @media(max-width:900px){.profile-card{grid-template-columns:1fr!important;width:min(620px,100%)!important}.profile-card h1::after{font-size:30px}}
+
+/* Requested profile layout and mobile avatar visibility fixes */
+.profile-card form .two,
+.signup-form .two{display:flex!important;flex-direction:column!important;gap:12px!important;width:100%!important;min-width:0!important}
+.profile-card form .two>*,
+.signup-form .two>*{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+.profile-card form>*,
+.signup-form>*{min-width:0!important;box-sizing:border-box!important}
+.profile-card{overflow-y:auto!important;overflow-x:hidden!important}
+.profile-card .avatar-picker{width:100%!important;overflow:visible!important;min-width:0!important}
+.avatar-options,.avatar-grid{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:auto!important;overflow-y:hidden!important;padding-left:2px!important;padding-right:8px!important}
+.avatar-options .avatar-choice,.avatar-grid .avatar-choice{overflow:visible!important;flex:none!important}
+.avatar{flex:none!important}
+@media(max-width:900px){
+  .profile-card{width:100%!important;max-width:100%!important;overflow-y:auto!important;overflow-x:hidden!important}
+  .profile-card form .two,.signup-form .two{width:100%!important}
+  .avatar-picker{width:100%!important}
+  .avatar-options,.avatar-grid{overflow-x:auto!important}
+}
