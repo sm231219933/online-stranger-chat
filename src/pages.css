@@ -28,3 +28,11 @@
 .room-page .offline-card .person-online{color:#8a92a4}
 .room-page .offline-card>b{color:#8a92a4}
 @media(max-width:700px){.room-page .person-card{padding:10px}.room-page .person-card .avatar{width:46px;height:46px;font-size:24px}.room-page .person-card>b{font-size:11px}.room-page .person-card .person-online{font-size:11px}}
+
+/* Profile and registration forms: every field gets its own full-width row */
+.profile-card .two,.signup-form .two{display:flex;flex-direction:column;gap:14px;width:100%}
+.profile-card .two>label,.signup-form .two>input,.signup-form .two>select{width:100%}
+.profile-card>label,.signup-form>input,.signup-form>select,.signup-form .file-button{width:100%;box-sizing:border-box}
+
+/* Guest profile must not offer profile-photo upload; photo upload stays on registration */
+.profile-shell .profile-card>.file-button{display:none}
