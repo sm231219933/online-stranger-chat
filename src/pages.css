@@ -1,38 +1,16 @@
 .info-page{min-height:100vh;background:linear-gradient(180deg,#f8faff 0%,#fff 55%,#f7f5ff 100%)}.info-page-content{width:min(1120px,100%);margin:0 auto;padding:72px 24px 90px}.info-page-content>h1{font-size:clamp(38px,5vw,62px);letter-spacing:-2px;margin:10px 0 12px;color:#172033}.info-page-content>.lead{max-width:760px;color:#6f7890;font-size:18px;line-height:1.7;margin:0 0 38px}.info-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:30px}.info-cards .card{width:auto;min-height:170px;padding:25px;border-radius:22px}.info-cards .card h2{margin:0 0 10px;font-size:20px}.info-cards .card p{margin:0;color:#70798d;line-height:1.7}.support-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.support-actions .card{width:auto;min-height:280px;padding:26px;border-radius:22px}.support-actions .card h2{margin:10px 0 8px}.support-actions .card p{color:#70798d;line-height:1.65;min-height:72px}.support-icon{font-size:42px}.feedback-card{width:min(720px,100%);margin-top:18px;text-align:center;border-radius:26px;padding:42px}.feedback-card h2{font-size:25px;margin:12px 0}.feedback-card p{color:#70798d;line-height:1.7}.feedback-card small{display:block;color:#8a92a4;margin-top:10px}.feedback-big{font-size:62px}.info-page-content>.big{margin-top:5px}.site-footer button{display:block;background:transparent;color:inherit;padding:5px 0;text-align:left}.site-footer button:hover{color:#5b5cf0}.footer-feedback button{border:1px solid #cfc8ff;background:#fff;padding:10px 14px;border-radius:11px;color:#4f46e5}.message-status{font-size:10px;letter-spacing:-1px}.call-actions button{cursor:pointer}
 @media(max-width:800px){.info-page-content{padding:48px 18px 65px}.info-cards,.support-actions{grid-template-columns:1fr}.info-cards .card,.support-actions .card{width:100%;min-height:0}.feedback-card{padding:30px 20px}.feedback-card .hero-buttons{flex-direction:column}.info-page-content>.big{width:100%}}
-
-/* Keyword ticker: move only the ticker itself, never the page */
-.keyword-ticker{width:100%;overflow:hidden;white-space:nowrap;display:block;box-sizing:border-box;position:relative}
-.keyword-ticker{animation:keyword-ticker-scroll 22s linear infinite}
-.keyword-ticker>*{display:inline-block;margin-right:12px}
-@keyframes keyword-ticker-scroll{from{transform:translateX(100%)}to{transform:translateX(-100%)} }
-.keyword-ticker:hover{animation-play-state:paused}
+.keyword-ticker{width:100%;overflow:hidden;white-space:nowrap;display:block;box-sizing:border-box;position:relative}.keyword-ticker{animation:keyword-ticker-scroll 22s linear infinite}.keyword-ticker>*{display:inline-block;margin-right:12px}@keyframes keyword-ticker-scroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}.keyword-ticker:hover{animation-play-state:paused}
 
 /* Online/offline people rows */
-.room-page .people-section{margin-top:18px}
-.room-page .people-section-title{display:flex;align-items:center;justify-content:space-between;padding:0 4px 9px;color:#3d465a;font-size:14px}
-.room-page .people-section-title span{background:#eef0f7;color:#687187;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}
-.room-page .people-grid{display:flex;flex-direction:column;gap:7px}
-.room-page .person-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;background:#fff;border:1px solid #e7eaf2;border-radius:15px;padding:11px 13px;box-shadow:0 2px 10px #18234d08;position:relative;transition:transform .15s ease,background .15s ease,border-color .15s ease}
-.room-page .person-card:hover{background:#f7f8ff;border-color:#dfe3ff;transform:translateY(-1px)}
-.room-page .person-card .avatar{width:52px;height:52px;font-size:27px}
-.room-page .person-card-info{min-width:0;flex:1}
-.room-page .person-card-info h3{margin:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.room-page .person-card-info p{margin:3px 0 0;color:#667085;font-size:12px}
-.room-page .person-card-info small{display:block;margin-top:2px;color:#8991a4;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.room-page .person-card .person-online{order:3;white-space:nowrap;font-size:12px;font-weight:750;color:#22a15a}
-.room-page .person-card .person-online i{font-style:normal}
-.room-page .person-card>b{order:4;color:#5961d8;font-size:12px;white-space:nowrap}
-.room-page .offline-section{margin-top:24px;padding-top:17px;border-top:1px solid #e8ebf2}
-.room-page .offline-card{opacity:.72;background:#fafbfc}
-.room-page .offline-card .person-online{color:#8a92a4}
-.room-page .offline-card>b{color:#8a92a4}
-@media(max-width:700px){.room-page .person-card{padding:10px}.room-page .person-card .avatar{width:46px;height:46px;font-size:24px}.room-page .person-card>b{font-size:11px}.room-page .person-card .person-online{font-size:11px}}
+.room-page .people-section{margin-top:18px}.room-page .people-section-title{display:flex;align-items:center;justify-content:space-between;padding:0 4px 9px;color:#3d465a;font-size:14px}.room-page .people-section-title span{background:#eef0f7;color:#687187;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}.room-page .people-grid{display:flex;flex-direction:column;gap:7px}.room-page .person-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;background:#fff;border:1px solid #e7eaf2;border-radius:15px;padding:11px 13px;box-shadow:0 2px 10px #18234d08;position:relative;transition:transform .15s ease,background .15s ease,border-color .15s ease}.room-page .person-card:hover{background:#f7f8ff;border-color:#dfe3ff;transform:translateY(-1px)}.room-page .person-card .avatar{width:52px;height:52px;font-size:27px}.room-page .person-card-info{min-width:0;flex:1}.room-page .person-card-info h3{margin:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.room-page .person-card-info p{margin:3px 0 0;color:#667085;font-size:12px}.room-page .person-card-info small{display:block;margin-top:2px;color:#8991a4;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.room-page .person-card .person-online{order:3;white-space:nowrap;font-size:12px;font-weight:750;color:#22a15a}.room-page .person-card .person-online i{font-style:normal}.room-page .person-card>b{order:4;color:#5961d8;font-size:12px;white-space:nowrap}.room-page .offline-section{display:none}.room-page .offline-card{display:none}
 
-/* Profile and registration forms: every field gets its own full-width row */
-.profile-card .two,.signup-form .two{display:flex;flex-direction:column;gap:14px;width:100%}
-.profile-card .two>label,.signup-form .two>input,.signup-form .two>select{width:100%}
-.profile-card>label,.signup-form>input,.signup-form>select,.signup-form .file-button{width:100%;box-sizing:border-box}
+/* Profile and registration: strict single vertical column */
+.profile-card{max-height:calc(100vh - 48px);overflow-y:auto;overflow-x:hidden}.profile-card form{grid-template-columns:1fr!important}.profile-card .two,.signup-form .two{display:flex;flex-direction:column;gap:14px;width:100%}.profile-card .two>label,.signup-form .two>input,.signup-form .two>select{width:100%}.profile-card>label,.signup-form>input,.signup-form>select,.signup-form .file-button{width:100%;box-sizing:border-box}.profile-preview{display:flex;align-items:center;gap:12px}.profile-preview>div:last-child{min-width:0}.profile-shell .profile-card>.file-button{display:none}
 
-/* Guest profile must not offer profile-photo upload; photo upload stays on registration */
-.profile-shell .profile-card>.file-button{display:none}
+/* Registration form also scrolls as one column */
+.auth-card{max-height:calc(100vh - 48px);overflow-y:auto;overflow-x:hidden}.signup-form{display:flex!important;flex-direction:column;gap:12px}.signup-form .signup-photo-row{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}.signup-form .signup-photo-row .file-button{width:100%}
+
+/* Room: only online users, with its own vertical scrollbar */
+.room-page{height:100vh;overflow:hidden}.room-page .room-head{position:sticky;top:0;z-index:2;background:#f7f8fc}.room-page .room-filters{position:sticky;top:105px;z-index:2;background:#f7f8fc}.room-page .people-section:first-of-type{height:calc(100vh - 250px);overflow-y:auto;overflow-x:hidden;padding-right:5px}.room-page .people-grid{padding-bottom:30px}
+@media(max-width:700px){.profile-card,.auth-card{max-height:calc(100vh - 20px)}.room-page .people-section:first-of-type{height:calc(100vh - 300px)}}
