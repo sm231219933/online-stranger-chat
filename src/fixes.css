@@ -13,22 +13,21 @@
 .signup-form .two>*{width:100%!important;min-width:0!important;box-sizing:border-box!important}
 .profile-card form>*,
 .signup-form>*{min-width:0!important;box-sizing:border-box!important}
-.profile-card{overflow-y:auto!important;overflow-x:hidden!important}
 .profile-card .avatar-picker{width:100%!important;overflow:visible!important;min-width:0!important}
 .avatar-options,.avatar-grid{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:auto!important;overflow-y:hidden!important;padding-left:2px!important;padding-right:8px!important}
 .avatar-options .avatar-choice,.avatar-grid .avatar-choice{overflow:visible!important;flex:none!important}
 .avatar{flex:none!important}
 @media(max-width:900px){
-  .profile-card{width:100%!important;max-width:100%!important;overflow-y:auto!important;overflow-x:hidden!important}
+  .profile-card{width:100%!important;max-width:100%!important}
   .profile-card form .two,.signup-form .two{width:100%!important}
   .avatar-picker{width:100%!important}
   .avatar-options,.avatar-grid{overflow-x:auto!important}
 }
 
-/* Remove the decorative identity preview. */
+/* Remove the unwanted profile identity preview. */
 .profile-shell .profile-card .profile-preview{display:none!important}
 
-/* Put the page heading OUTSIDE the guest-registration card so card zoom/scroll can never hide it. */
+/* Keep the heading outside the guest-registration card. */
 .profile-shell .center{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important}
 .profile-shell .center::before{
   content:"Online chatting without registration";
@@ -48,20 +47,25 @@
 }
 .profile-shell .profile-card h1{display:none!important}
 .profile-shell .profile-card h1::after{display:none!important;content:none!important}
-@media(max-width:700px){
-  .profile-shell .center::before{font-size:28px;margin-bottom:10px}
-}
+@media(max-width:700px){.profile-shell .center::before{font-size:28px;margin-bottom:10px}}
 
-/* Only fix the profile window: make the complete guest-registration form independently scrollable at any browser zoom. */
+/* IMPORTANT: the profile page itself scrolls. Do not trap the form inside a fixed-height card. */
+.profile-shell{min-height:100dvh!important;height:auto!important;overflow:visible!important}
+.profile-shell .center{min-height:0!important;height:auto!important;overflow:visible!important;padding:24px 16px 40px!important}
 .profile-shell .profile-card{
-  height:calc(100dvh - 150px)!important;
+  width:min(560px,100%)!important;
+  height:auto!important;
   max-height:none!important;
   min-height:0!important;
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
+  overflow:visible!important;
+  overflow-x:visible!important;
   box-sizing:border-box!important;
-  overscroll-behavior:contain!important;
+  flex:none!important;
 }
 @media(max-width:700px){
-  .profile-shell .profile-card{height:calc(100dvh - 110px)!important}
+  .profile-shell .center{padding:12px 10px 30px!important}
+  .profile-shell .profile-card{width:100%!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important}
 }
+
+/* The entire document remains the scroll container at every browser zoom. */
+html:has(.profile-shell),body:has(.profile-shell),#root:has(.profile-shell){height:auto!important;min-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important}
