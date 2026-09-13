@@ -25,30 +25,29 @@
   .avatar-options,.avatar-grid{overflow-x:auto!important}
 }
 
-/* Profile page: remove the decorative identity preview and keep the heading visible while zooming/scrolling. */
+/* Remove the decorative identity preview. */
 .profile-shell .profile-card .profile-preview{display:none!important}
-.profile-shell .profile-card h1{
-  position:sticky!important;
-  top:0!important;
-  z-index:20!important;
+
+/* Put the page heading OUTSIDE the guest-registration card so card zoom/scroll can never hide it. */
+.profile-shell .center{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important}
+.profile-shell .center::before{
+  content:"Online chatting without registration";
   display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  min-height:78px!important;
-  margin:0!important;
-  padding:4px 0 10px!important;
-  background:#fff!important;
+  width:min(560px,100%);
+  box-sizing:border-box;
+  margin:0 auto 14px;
+  padding:0 4px;
+  color:#172033;
+  font-size:clamp(26px,3vw,40px);
+  line-height:1.15;
+  font-weight:850;
+  letter-spacing:-.7px;
+  text-align:left;
+  position:relative;
+  z-index:30;
 }
-.profile-shell .profile-card h1::after{
-  content:"Online chatting without registration"!important;
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  font-size:clamp(28px,3vw,42px)!important;
-  line-height:1.15!important;
-  color:#17203c!important;
-}
-@media(max-width:900px){
-  .profile-shell .profile-card h1{min-height:68px!important}
-  .profile-shell .profile-card h1::after{font-size:30px!important}
+.profile-shell .profile-card h1{display:none!important}
+.profile-shell .profile-card h1::after{display:none!important;content:none!important}
+@media(max-width:700px){
+  .profile-shell .center::before{font-size:28px;margin-bottom:10px}
 }
