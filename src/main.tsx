@@ -4,6 +4,7 @@ import App from "./App";
 import "./animations.css";
 import "./fixes.css";
 import "./chrome.css";
+import "./brand-fix";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
