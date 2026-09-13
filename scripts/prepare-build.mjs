@@ -15,15 +15,12 @@ if (!s.includes('deleteField')) {
 }
 
 // Firestore profile documents use the document ID as the canonical user UID.
-// The old code read only document fields, which made selected.uid undefined and
-// produced chat paths ending in an underscore (for example chats/uid_).
 s = s.replace(
   's.docs.map(d=>d.data() as Profile).filter(p=>p.uid!==user.uid)',
-  's.docs.map(d=>({...d.data() as Profile,uid:d.id})).filter(p=>p.uid!==user.uid)'
+  's.docs.map(d=>({...((d.data() as Profile)),uid:d.id})).filter(p=>p.uid!==user.uid)'
 );
 
-// Never open a chat without a real UID, and never create a Firestore document
-// whose participants contain undefined.
+// Never open a chat without a real UID, and never create a Firestore document whose participants contain undefined.
 s = s.replace(
   'function openChat(p:Profile){setSelected(p);setMessages([]);setScreen("chat")}',
   'function openChat(p:Profile){if(!p?.uid)return;setSelected({...p,uid:p.uid});setMessages([]);setScreen("chat")} '
@@ -39,8 +36,7 @@ s = s.replace(
   '<textarea value={text} placeholder="Type a message…" disabled={sending} rows={1} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void sendMessage()}}}/>'
 );
 
-// Persist the current SPA screen in the URL hash and localStorage so refresh does not
-// unexpectedly return to Home. The selected chat profile is persisted separately.
+// Persist the current SPA screen in the URL hash and localStorage so refresh does not unexpectedly return to Home.
 const oldState = 'const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile>(emptyProfile()),[profiles,setProfiles]=useState<Profile[]>([]),[selected,setSelected]=useState<Profile|null>(null),[messages,setMessages]=useState<Message[]>([]),[inbox,setInbox]=useState<InboxItem[]>([]),[screen,setScreen]=useState<Screen>("home");';
 const newState = 'const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile>(emptyProfile()),[profiles,setProfiles]=useState<Profile[]>([]),[selected,setSelected]=useState<Profile|null>(null),[messages,setMessages]=useState<Message[]>([]),[inbox,setInbox]=useState<InboxItem[]>([]);\n  const initialScreen=(()=>{const h=window.location.hash.replace(/^#/ ,"") as Screen;const valid:Screen[]=["home","profile","room","chat","auth","inbox","safety","tips","faq","privacy","terms","support","feedback"];return valid.includes(h)?h:(localStorage.getItem("scn-screen") as Screen)||"home"})();\n  const [screenState,setScreenState]=useState<Screen>(initialScreen);\n  const screen=screenState;\n  function setScreen(next:Screen){setScreenState(next);localStorage.setItem("scn-screen",next);window.history.replaceState(null,"",`${window.location.pathname}${window.location.search}#${next}`);}';
 if (s.includes(oldState)) s = s.replace(oldState, newState);
