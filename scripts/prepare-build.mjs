@@ -18,7 +18,4 @@ s=s.replace('setUser(u);setProfile({...p,username:name});setScreen("room")}catch
 s=s.replace('p.username.trim().toLowerCase()','String(p.username||"").trim().toLowerCase()');
 s=s.replace('profile.username.trim()','String(profile.username||"").trim()');
 s=s.replace('email.trim()','String(email||"").trim()');
-// Login username must be validated from the actual typed username, not a possibly stale/undefined profile value.
-s=s.replace(/([A-Za-z_$][\w$]*)\.trim\(\)\.toLowerCase\(\)/g,'String($1||"").trim().toLowerCase()');
-s=s.replace(/\.trim\(\)\.toLowerCase\(\)/g,'String((sessionStorage.getItem("login-username")||"")).trim().toLowerCase()');
 fs.writeFileSync(p,s);
