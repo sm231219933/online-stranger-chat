@@ -1,4 +1,5 @@
-// Preserve the active field when React remounts a screen during a state update.
+// Preserve the active field when React remounts a profile/auth form.
+// Chat is intentionally excluded so live message updates cannot steal focus or scroll.
 type FieldInfo = {
   tag: "input" | "textarea";
   id: string;
@@ -12,6 +13,10 @@ let lastField: FieldInfo | null = null;
 let restoring = false;
 let restoreQueued = false;
 
+function isChatPage() {
+  return !!document.querySelector(".chat-page");
+}
+
 function isEditable(el: Element | null): el is HTMLInputElement | HTMLTextAreaElement {
   if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
   if (el instanceof HTMLInputElement && !["text", "email", "password", "number", "search", "tel", "url"].includes(el.type)) return false;
@@ -19,7 +24,7 @@ function isEditable(el: Element | null): el is HTMLInputElement | HTMLTextAreaEl
 }
 
 function remember(el: Element | null) {
-  if (!isEditable(el)) return;
+  if (isChatPage() || !isEditable(el)) return;
   lastField = {
     tag: el instanceof HTMLTextAreaElement ? "textarea" : "input",
     id: el.id,
@@ -31,7 +36,7 @@ function remember(el: Element | null) {
 }
 
 function findField() {
-  if (!lastField) return null;
+  if (!lastField || isChatPage()) return null;
 
   const selector = lastField.id
     ? `#${CSS.escape(lastField.id)}`
@@ -46,21 +51,17 @@ function findField() {
     if (isEditable(el)) return el;
   }
 
-  // Match the exact value after React has replaced the DOM node.
-  // This handles the profile username field, which intentionally has no id/name.
   const candidates = Array.from(document.querySelectorAll(lastField.tag))
     .filter(isEditable)
     .filter(el => (el instanceof HTMLInputElement ? el.type : "textarea") === lastField!.type);
 
   const exact = candidates.find(el => el.value === lastField!.value);
   if (exact) return exact;
-
-  // Final fallback for the age number input.
   return candidates[0] || null;
 }
 
 function restoreNow() {
-  if (!lastField || restoring) return;
+  if (!lastField || restoring || isChatPage()) return;
   const el = findField();
   if (!el || document.activeElement === el) return;
 
@@ -77,7 +78,7 @@ function restoreNow() {
 }
 
 function queueRestore() {
-  if (restoreQueued) return;
+  if (restoreQueued || isChatPage()) return;
   restoreQueued = true;
   queueMicrotask(() => {
     restoreQueued = false;
@@ -90,16 +91,18 @@ function queueRestore() {
 
 document.addEventListener("focusin", event => remember(event.target as Element), true);
 document.addEventListener("input", event => {
+  if (isChatPage()) return;
   remember(event.target as Element);
   queueRestore();
 }, true);
 
 document.addEventListener("change", event => {
+  if (isChatPage()) return;
   remember(event.target as Element);
   queueRestore();
 }, true);
 
 const observer = new MutationObserver(() => {
-  if (lastField) queueRestore();
+  if (!isChatPage() && lastField) queueRestore();
 });
 observer.observe(document.documentElement, { childList: true, subtree: true });
