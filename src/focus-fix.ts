@@ -1,6 +1,14 @@
-// Preserve the field that the user is actively editing when React replaces a screen subtree.
-// The old fix waited for animation frames, which can be too late on mobile browsers.
-let lastField: { tag: "input" | "textarea"; id: string; name: string; placeholder: string; type: string } | null = null;
+// Keep the active form field focused if React replaces that DOM node during a render.
+// This is intentionally limited to editable inputs and textareas.
+type FieldInfo = {
+  tag: "input" | "textarea";
+  id: string;
+  name: string;
+  placeholder: string;
+  type: string;
+};
+
+let lastField: FieldInfo | null = null;
 let restoring = false;
 let restoreQueued = false;
 
@@ -23,6 +31,7 @@ function remember(el: Element | null) {
 
 function findField() {
   if (!lastField) return null;
+
   const selector = lastField.id
     ? `#${CSS.escape(lastField.id)}`
     : lastField.name
@@ -30,9 +39,23 @@ function findField() {
       : lastField.placeholder
         ? `${lastField.tag}[placeholder="${CSS.escape(lastField.placeholder)}"]`
         : null;
-  if (!selector) return null;
-  const el = document.querySelector(selector);
-  return isEditable(el) ? el : null;
+
+  if (selector) {
+    const el = document.querySelector(selector);
+    if (isEditable(el)) return el;
+  }
+
+  // Some fields (notably the Age number input) have no id/name/placeholder.
+  // Use their stable HTML type as a fallback instead of losing the cursor.
+  if (lastField.tag === "textarea") {
+    const el = document.querySelector("textarea");
+    if (isEditable(el)) return el;
+  } else {
+    const el = document.querySelector(`input[type="${CSS.escape(lastField.type)}"]`);
+    if (isEditable(el)) return el;
+  }
+
+  return null;
 }
 
 function restoreNow() {
@@ -68,8 +91,6 @@ document.addEventListener("input", event => {
   queueRestore();
 }, true);
 
-// React can remove the focused input and create its replacement in the same update.
-// Watching the DOM lets us restore focus immediately instead of waiting for another tap.
 const observer = new MutationObserver(() => {
   if (lastField && document.activeElement !== findField()) queueRestore();
 });
