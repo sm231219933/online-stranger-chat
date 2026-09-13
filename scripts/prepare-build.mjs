@@ -33,6 +33,9 @@ s = s.replace(
   ''
 );
 
+// Remove the profile preview block that is appearing directly below the profile heading.
+s = s.replace(/<div className="profile-preview">[\s\S]*?<\/div>(?=<form)/, '');
+
 // Load the requested profile layout/mobile-avatar fixes without changing app behavior.
 if (!s.includes('import "./fixes.css";')) {
   s = s.replace('import "./pages.css";', 'import "./pages.css";\nimport "./fixes.css";');
