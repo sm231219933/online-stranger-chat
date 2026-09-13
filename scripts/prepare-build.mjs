@@ -18,4 +18,6 @@ s=s.replace('setUser(u);setProfile({...p,username:name});setScreen("room")}catch
 s=s.replace('p.username.trim().toLowerCase()','String(p.username||"").trim().toLowerCase()');
 s=s.replace('profile.username.trim()','String(profile.username||"").trim()');
 s=s.replace('email.trim()','String(email||"").trim()');
+// If a logged-in account has no username in its existing profile, use the email name as a valid username instead of throwing the format error.
+s=s.replace('String(p.username||"").trim().toLowerCase()','String(p.username||u.email?.split("@")[0]||"").trim().toLowerCase().replace(/[^a-z0-9_.-]/g,"").slice(0,24)');
 fs.writeFileSync(p,s);
