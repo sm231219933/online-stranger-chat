@@ -58,7 +58,7 @@ s = s.replace(
 );
 s = s.replace(
   'async function saveProfile(e:FormEvent){e.preventDefault();setSaving(true);setError("");try{const u=user||(await signInAnonymously(auth)).user,p={...profile,uid:u.uid},name=p.username.trim().toLowerCase();',
-  'async function saveProfile(e:FormEvent){e.preventDefault();setSaving(true);setError("");try{const form=e.currentTarget,fd=new FormData(form),username=String(fd.get("username")||profile.username),age=Number(fd.get("age")||profile.age),u=user||(await signInAnonymously(auth)).user,p={...profile,uid:u.uid,username,age},name=p.username.trim().toLowerCase();'
+  'async function saveProfile(e:FormEvent<HTMLFormElement>){e.preventDefault();setSaving(true);setError("");try{const form=e.currentTarget,fd=new FormData(form),username=String(fd.get("username")||profile.username),age=Number(fd.get("age")||profile.age),u=user||(await signInAnonymously(auth)).user,p={...profile,uid:u.uid,username,age},name=p.username.trim().toLowerCase();'
 );
 
 // Persist the current screen in the existing URL hash so browser refresh returns to the same page.
