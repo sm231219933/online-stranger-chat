@@ -5,6 +5,7 @@ import "./animations.css";
 import "./fixes.css";
 import "./chrome.css";
 import "./brand-fix";
+import "./focus-fix";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
